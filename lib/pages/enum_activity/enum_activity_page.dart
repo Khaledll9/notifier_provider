@@ -20,16 +20,48 @@ class _EnumActivityPageState extends ConsumerState<EnumActivityPage> {
   @override
   void initState() {
     super.initState();
-    ref.read(enumActivityProvider.notifier).fetchActivity(activityTypes[0]);
+    Future.delayed(Duration.zero, () {
+      ref.read(enumActivityProvider.notifier).fetchActivity(activityTypes[0]);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<EnumActivityState>(
+      enumActivityProvider,
+      (previous, next) {
+        if (next.status == ActivityStatus.failure) {
+          showDialog(
+            context: context,
+            builder: (context) {
+              return AlertDialog(
+                content: Text(next.error),
+              );
+            },
+          );
+        }
+      },
+    );
+
     final activityState = ref.watch(enumActivityProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('EnumActivityNotifier'),
+        actions: [
+          IconButton(
+            onPressed: () {
+              ref.read(myCounterProvider.notifier).increment();
+            },
+            icon: const Icon(Icons.add),
+          ),
+          IconButton(
+            onPressed: () {
+              ref.invalidate(enumActivityProvider);
+            },
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
       ),
       body: switch (activityState.status) {
         ActivityStatus.initial => const Center(
@@ -41,15 +73,18 @@ class _EnumActivityPageState extends ConsumerState<EnumActivityPage> {
         ActivityStatus.loading => const Center(
             child: CircularProgressIndicator(),
           ),
-        ActivityStatus.failure => Center(
-            child: Text(
-              activityState.error,
-              style: const TextStyle(
-                fontSize: 20,
-                color: Colors.red,
-              ),
-            ),
-          ),
+        ActivityStatus.failure =>
+          activityState.activities.first == Activity.empty()
+              ? Center(
+                  child: Text(
+                    activityState.error,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      color: Colors.red,
+                    ),
+                  ),
+                )
+              : ActivityWidget(activity: activityState.activities.first),
         ActivityStatus.success => ActivityWidget(
             activity: activityState.activities.first,
           ),
