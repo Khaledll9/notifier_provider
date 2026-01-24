@@ -15,7 +15,7 @@ class SealedActivity extends _$SealedActivity {
     ref.onDispose(() {
       print('[sealedActivityProvider] disposed');
     });
-    print('hashCode: $hashCode');
+    // print('hashCode: $hashCode');
     return const SealedActivityInitial();
   }
 
@@ -37,10 +37,10 @@ class SealedActivity extends _$SealedActivity {
       final activities = [
         for (final activity in activityList) Activity.fromJson(activity),
       ];
-
       state = SealedActivitySuccess(activities: activities);
     } catch (e) {
       state = SealedActivityFailure(error: e.toString());
+      print('Error in fetchActivity: $e');
     }
   }
 }
